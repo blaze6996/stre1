@@ -53,6 +53,14 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Design flourishes */
+    --primary-glow: 222.2 84% 56%;
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--sidebar-ring)));
+    --gradient-subtle: radial-gradient(1200px 600px at 0% 0%, hsl(var(--sidebar-ring) / 0.15) 0%, transparent 60%), radial-gradient(800px 400px at 100% 0%, hsl(var(--primary) / 0.12) 0%, transparent 60%);
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.25);
+    --shadow-glow: 0 0 40px hsl(var(--sidebar-ring) / 0.35);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
@@ -91,6 +99,11 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Design flourishes (dark) */
+    --gradient-subtle: radial-gradient(1200px 600px at 0% 0%, hsl(var(--sidebar-ring) / 0.2) 0%, transparent 60%), radial-gradient(800px 400px at 100% 0%, hsl(var(--primary) / 0.18) 0%, transparent 60%);
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--sidebar-ring) / 0.35);
+    --shadow-glow: 0 0 50px hsl(var(--sidebar-ring) / 0.45);
   }
 }
 
@@ -101,5 +114,21 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .bg-hero {
+    background-image: var(--gradient-subtle);
+  }
+  .btn-hero {
+    background-image: var(--gradient-primary);
+    color: hsl(var(--primary-foreground));
+    box-shadow: var(--shadow-elegant);
+    transition: var(--transition-smooth);
+  }
+  .btn-hero:hover {
+    box-shadow: var(--shadow-glow);
+    filter: brightness(1.02);
   }
 }
