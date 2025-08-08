@@ -69,9 +69,12 @@ export type Database = {
           description: string | null
           id: string
           is_published: boolean
+          rating_count: number
+          rating_sum: number
           slug: string | null
           title: string
           updated_at: string
+          views_count: number
         }
         Insert: {
           cover_image_url?: string | null
@@ -80,9 +83,12 @@ export type Database = {
           description?: string | null
           id?: string
           is_published?: boolean
+          rating_count?: number
+          rating_sum?: number
           slug?: string | null
           title: string
           updated_at?: string
+          views_count?: number
         }
         Update: {
           cover_image_url?: string | null
@@ -91,9 +97,12 @@ export type Database = {
           description?: string | null
           id?: string
           is_published?: boolean
+          rating_count?: number
+          rating_sum?: number
           slug?: string | null
           title?: string
           updated_at?: string
+          views_count?: number
         }
         Relationships: []
       }
@@ -143,9 +152,12 @@ export type Database = {
           description: string | null
           id: string
           is_published: boolean
+          rating_count: number
+          rating_sum: number
           slug: string | null
           title: string
           updated_at: string
+          views_count: number
         }
       }
       admin_delete_episode: {
@@ -155,6 +167,14 @@ export type Database = {
       admin_delete_series: {
         Args: { admin_code: string; p_series_id: string }
         Returns: undefined
+      }
+      increment_series_view: {
+        Args: { p_series_id: string }
+        Returns: number
+      }
+      rate_series: {
+        Args: { p_series_id: string; p_rating: number }
+        Returns: number
       }
     }
     Enums: {
