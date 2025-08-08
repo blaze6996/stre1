@@ -102,7 +102,52 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      admin_create_episode: {
+        Args: {
+          admin_code: string
+          series_id: string
+          title: string
+          dailymotion_video_id: string
+          description?: string
+          season_number?: number
+          episode_number?: number
+          published_at?: string
+        }
+        Returns: {
+          created_at: string
+          dailymotion_video_id: string
+          description: string | null
+          episode_number: number | null
+          id: string
+          published_at: string | null
+          season_number: number | null
+          series_id: string
+          title: string
+          updated_at: string
+        }
+      }
+      admin_create_series: {
+        Args: {
+          admin_code: string
+          title: string
+          description?: string
+          cover_image_url?: string
+          dailymotion_playlist_id?: string
+          slug?: string
+          is_published?: boolean
+        }
+        Returns: {
+          cover_image_url: string | null
+          created_at: string
+          dailymotion_playlist_id: string | null
+          description: string | null
+          id: string
+          is_published: boolean
+          slug: string | null
+          title: string
+          updated_at: string
+        }
+      }
     }
     Enums: {
       [_ in never]: never
