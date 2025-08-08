@@ -24,9 +24,10 @@ const DailymotionPlayer = ({ videoId, playlistId, title = "Player", className }:
     : `https://www.dailymotion.com/embed/video/${effectiveVideoId}?queue-enable=false&sharing-enable=false&ui-start-screen-info=false&autoplay=0&mute=0&queue-autoplay-next=false`;
 
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn("mx-auto w-full max-w-[420px] sm:max-w-[520px] md:max-w-[720px] lg:max-w-[960px]", className)}>
       <AspectRatio ratio={16 / 9}>
         <iframe
+          loading="lazy"
           src={src}
           title={title}
           allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
