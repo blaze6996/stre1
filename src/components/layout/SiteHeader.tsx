@@ -1,6 +1,6 @@
 import { Link, NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-
+import ThemeToggle from "./ThemeToggle";
 const SiteHeader = () => {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -16,6 +16,7 @@ const SiteHeader = () => {
           <NavLink to="/admin" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
             Admin
           </NavLink>
+          <ThemeToggle />
           <Button asChild size="sm" variant="default">
             <a href="/admin">Manage</a>
           </Button>

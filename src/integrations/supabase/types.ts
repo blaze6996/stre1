@@ -14,7 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      episodes: {
+        Row: {
+          created_at: string
+          dailymotion_video_id: string
+          description: string | null
+          episode_number: number | null
+          id: string
+          published_at: string | null
+          season_number: number | null
+          series_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dailymotion_video_id: string
+          description?: string | null
+          episode_number?: number | null
+          id?: string
+          published_at?: string | null
+          season_number?: number | null
+          series_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dailymotion_video_id?: string
+          description?: string | null
+          episode_number?: number | null
+          id?: string
+          published_at?: string | null
+          season_number?: number | null
+          series_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "episodes_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      series: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          dailymotion_playlist_id: string | null
+          description: string | null
+          id: string
+          is_published: boolean
+          slug: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          dailymotion_playlist_id?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          slug?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          dailymotion_playlist_id?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          slug?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
