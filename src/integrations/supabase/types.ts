@@ -148,6 +148,14 @@ export type Database = {
           updated_at: string
         }
       }
+      admin_delete_episode: {
+        Args: { admin_code: string; p_episode_id: string }
+        Returns: undefined
+      }
+      admin_delete_series: {
+        Args: { admin_code: string; p_series_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

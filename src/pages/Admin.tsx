@@ -24,6 +24,20 @@ const Admin = () => {
   const [epTitle, setEpTitle] = useState("");
   const [videoId, setVideoId] = useState("");
 
+  // Delete form state
+  const [delSeriesId, setDelSeriesId] = useState("");
+  const [delEpisodeId, setDelEpisodeId] = useState("");
+
+  const extractDailymotionId = (input: string) => {
+    if (!input) return input;
+    const clean = input.trim().split("?")[0];
+    const short = clean.match(/dai\.ly\/([A-Za-z0-9]+)/i);
+    if (short) return short[1];
+    const full = clean.match(/dailymotion\.com\/video\/([A-Za-z0-9]+)/i);
+    if (full) return full[1];
+    return clean.replace(/^https?:\/\/.+\//, "").split("_")[0];
+  };
+
   const handleAuthorize = (e: React.FormEvent) => {
     e.preventDefault();
     if (code.trim() === ADMIN_CODE) {
@@ -62,11 +76,12 @@ const Admin = () => {
       return;
     }
     try {
+      const normalizedVideoId = extractDailymotionId(videoId);
       const { data, error } = await supabase.rpc("admin_create_episode", {
         admin_code: code,
         series_id: epSeriesId,
         title: epTitle,
-        dailymotion_video_id: videoId,
+        dailymotion_video_id: normalizedVideoId,
         description: null,
         season_number: null,
         episode_number: null,
@@ -79,6 +94,42 @@ const Admin = () => {
       setVideoId("");
     } catch (err: any) {
       toast({ title: "Failed to save episode", description: err.message || String(err), variant: "destructive" });
+    }
+  };
+
+  const handleDeleteSeries = async () => {
+    if (!delSeriesId) {
+      toast({ title: "Series ID required", description: "Enter the Series UUID to delete" });
+      return;
+    }
+    try {
+      const { error } = await supabase.rpc("admin_delete_series", {
+        admin_code: code,
+        p_series_id: delSeriesId,
+      });
+      if (error) throw error;
+      toast({ title: "Series deleted", description: delSeriesId });
+      setDelSeriesId("");
+    } catch (err: any) {
+      toast({ title: "Failed to delete series", description: err.message || String(err), variant: "destructive" });
+    }
+  };
+
+  const handleDeleteEpisode = async () => {
+    if (!delEpisodeId) {
+      toast({ title: "Episode ID required", description: "Enter the Episode UUID to delete" });
+      return;
+    }
+    try {
+      const { error } = await supabase.rpc("admin_delete_episode", {
+        admin_code: code,
+        p_episode_id: delEpisodeId,
+      });
+      if (error) throw error;
+      toast({ title: "Episode deleted", description: delEpisodeId });
+      setDelEpisodeId("");
+    } catch (err: any) {
+      toast({ title: "Failed to delete episode", description: err.message || String(err), variant: "destructive" });
     }
   };
 
@@ -147,7 +198,7 @@ const Admin = () => {
         <Card>
           <CardHeader>
             <CardTitle>Add Episode to Series</CardTitle>
-            <CardDescription>Attach a Dailymotion video to a series as an episode</CardDescription>
+            <CardDescription>Attach a Dailymotion video to a series as an episode (paste ID or public URL)</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
@@ -160,10 +211,31 @@ const Admin = () => {
                 <Input id="ep-title" placeholder="S01E01 - Episode name" value={epTitle} onChange={(e) => setEpTitle(e.target.value)} />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="videoId">Dailymotion Video ID</Label>
-                <Input id="videoId" placeholder="x7xyzab" value={videoId} onChange={(e) => setVideoId(e.target.value)} />
+                <Label htmlFor="videoId">Dailymotion Video ID or URL</Label>
+                <Input id="videoId" placeholder="x7xyzab or https://www.dailymotion.com/video/x7xyzab" value={videoId} onChange={(e) => setVideoId(e.target.value)} />
               </div>
               <Button onClick={handleSaveEpisode}>Upload/Link Episode</Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Delete Series or Episode</CardTitle>
+            <CardDescription>Danger zone: this permanently removes data</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="del-series">Series ID</Label>
+                <Input id="del-series" placeholder="Series UUID" value={delSeriesId} onChange={(e) => setDelSeriesId(e.target.value)} />
+                <Button variant="destructive" onClick={handleDeleteSeries}>Delete Series (and its Episodes)</Button>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="del-episode">Episode ID</Label>
+                <Input id="del-episode" placeholder="Episode UUID" value={delEpisodeId} onChange={(e) => setDelEpisodeId(e.target.value)} />
+                <Button variant="destructive" onClick={handleDeleteEpisode}>Delete Episode</Button>
+              </div>
             </div>
           </CardContent>
         </Card>
