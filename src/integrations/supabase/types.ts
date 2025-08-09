@@ -63,10 +63,12 @@ export type Database = {
       }
       series: {
         Row: {
+          category: Database["public"]["Enums"]["series_category"] | null
           cover_image_url: string | null
           created_at: string
           dailymotion_playlist_id: string | null
           description: string | null
+          fts: unknown | null
           id: string
           is_published: boolean
           rating_count: number
@@ -77,10 +79,12 @@ export type Database = {
           views_count: number
         }
         Insert: {
+          category?: Database["public"]["Enums"]["series_category"] | null
           cover_image_url?: string | null
           created_at?: string
           dailymotion_playlist_id?: string | null
           description?: string | null
+          fts?: unknown | null
           id?: string
           is_published?: boolean
           rating_count?: number
@@ -91,10 +95,12 @@ export type Database = {
           views_count?: number
         }
         Update: {
+          category?: Database["public"]["Enums"]["series_category"] | null
           cover_image_url?: string | null
           created_at?: string
           dailymotion_playlist_id?: string | null
           description?: string | null
+          fts?: unknown | null
           id?: string
           is_published?: boolean
           rating_count?: number
@@ -146,10 +152,12 @@ export type Database = {
           is_published?: boolean
         }
         Returns: {
+          category: Database["public"]["Enums"]["series_category"] | null
           cover_image_url: string | null
           created_at: string
           dailymotion_playlist_id: string | null
           description: string | null
+          fts: unknown | null
           id: string
           is_published: boolean
           rating_count: number
@@ -178,7 +186,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      series_category: "donghua" | "anime" | "movie" | "cartoon"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -305,6 +313,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      series_category: ["donghua", "anime", "movie", "cartoon"],
+    },
   },
 } as const
