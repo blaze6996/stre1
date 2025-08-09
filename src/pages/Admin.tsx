@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const ADMIN_CODE = "Shivam2008";
 
@@ -23,6 +24,13 @@ const Admin = () => {
   const [epSeriesId, setEpSeriesId] = useState("");
   const [epTitle, setEpTitle] = useState("");
   const [videoId, setVideoId] = useState("");
+
+  // Playlist import state
+  const [plUrl, setPlUrl] = useState("");
+  const [plVideos, setPlVideos] = useState<Array<{ id: string; title: string; description?: string; thumbnail_url?: string }>>([]);
+  const [plSelected, setPlSelected] = useState<Record<string, boolean>>({});
+  const [isFetchingPlaylist, setIsFetchingPlaylist] = useState(false);
+  const [isImportingEpisodes, setIsImportingEpisodes] = useState(false);
 
   // Delete form state
   const [delSeriesId, setDelSeriesId] = useState("");
@@ -94,6 +102,81 @@ const Admin = () => {
       setVideoId("");
     } catch (err: any) {
       toast({ title: "Failed to save episode", description: err.message || String(err), variant: "destructive" });
+    }
+  };
+
+  const extractDailymotionPlaylistId = (input: string) => {
+    if (!input) return input;
+    const clean = input.trim();
+    const match = clean.match(/playlist\/([A-Za-z0-9]+)/i);
+    if (match) return match[1];
+    return clean;
+  };
+
+  const handleFetchPlaylist = async () => {
+    if (!plUrl) {
+      toast({ title: "Playlist URL required", description: "Paste a public Dailymotion playlist link or ID" });
+      return;
+    }
+    setIsFetchingPlaylist(true);
+    try {
+      const pid = extractDailymotionPlaylistId(plUrl);
+      let page = 1;
+      const limit = 100;
+      let all: any[] = [];
+      for (let i = 0; i < 10; i++) {
+        const res = await fetch(`https://api.dailymotion.com/playlist/${pid}/videos?fields=id,title,description,thumbnail_url&page=${page}&limit=${limit}`);
+        if (!res.ok) throw new Error(`Dailymotion API error: ${res.status}`);
+        const data = await res.json();
+        const list = (data.list ?? data.result ?? data.videos ?? []) as any[];
+        all = all.concat(list);
+        if (!data.has_more) break;
+        page += 1;
+      }
+      setPlVideos(all.map((v: any) => ({ id: v.id, title: v.title, description: v.description, thumbnail_url: v.thumbnail_url })));
+      setPlSelected({});
+      toast({ title: "Playlist fetched", description: `Found ${all.length} videos` });
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: "Failed to fetch playlist", description: err.message || String(err), variant: "destructive" });
+    } finally {
+      setIsFetchingPlaylist(false);
+    }
+  };
+
+  const handleImportSelected = async () => {
+    if (!epSeriesId) {
+      toast({ title: "Series ID required", description: "Enter the Series ID to import into", variant: "destructive" });
+      return;
+    }
+    const selectedIds = plVideos.filter(v => plSelected[v.id]).map(v => v.id);
+    if (selectedIds.length === 0) {
+      toast({ title: "No videos selected", description: "Select at least one video to import" });
+      return;
+    }
+    setIsImportingEpisodes(true);
+    try {
+      const results = await Promise.allSettled(
+        selectedIds.map((vidId, idx) =>
+          supabase.rpc("admin_create_episode", {
+            admin_code: code,
+            series_id: epSeriesId,
+            title: plVideos.find(v => v.id === vidId)?.title || `Episode ${idx + 1}`,
+            dailymotion_video_id: vidId,
+            description: null,
+            season_number: null,
+            episode_number: null,
+            published_at: null,
+          })
+        )
+      );
+      const success = results.filter((r) => r.status === "fulfilled").length;
+      const failures = results.length - success;
+      toast({ title: "Import complete", description: `${success} added, ${failures} failed` });
+    } catch (err: any) {
+      toast({ title: "Import failed", description: err.message || String(err), variant: "destructive" });
+    } finally {
+      setIsImportingEpisodes(false);
     }
   };
 
@@ -215,6 +298,59 @@ const Admin = () => {
                 <Input id="videoId" placeholder="x7xyzab or https://www.dailymotion.com/video/x7xyzab" value={videoId} onChange={(e) => setVideoId(e.target.value)} />
               </div>
               <Button onClick={handleSaveEpisode}>Upload/Link Episode</Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Import Episodes from Dailymotion Playlist</CardTitle>
+            <CardDescription>Paste a public playlist link or ID, fetch videos, select and import into the series.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="pl-series">Series ID</Label>
+                <Input id="pl-series" placeholder="Series UUID" value={epSeriesId} onChange={(e) => setEpSeriesId(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="pl-url">Playlist URL or ID</Label>
+                <Input id="pl-url" placeholder="https://www.dailymotion.com/playlist/x85adw" value={plUrl} onChange={(e) => setPlUrl(e.target.value)} />
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={handleFetchPlaylist} disabled={isFetchingPlaylist}>{isFetchingPlaylist ? "Fetching..." : "Fetch Videos"}</Button>
+                {plVideos.length > 0 && (
+                  <Button variant="secondary" onClick={handleImportSelected} disabled={isImportingEpisodes}>
+                    {isImportingEpisodes ? "Importing..." : `Import Selected (${Object.values(plSelected).filter(Boolean).length})`}
+                  </Button>
+                )}
+              </div>
+              {plVideos.length > 0 && (
+                <div className="rounded-md border">
+                  <div className="flex items-center gap-2 p-3 border-b">
+                    <Checkbox id="select-all" checked={plVideos.length > 0 && plVideos.every(v => plSelected[v.id])} onCheckedChange={(c) => {
+                      const checked = Boolean(c);
+                      const next: Record<string, boolean> = {};
+                      plVideos.forEach(v => next[v.id] = checked);
+                      setPlSelected(next);
+                    }} />
+                    <Label htmlFor="select-all">Select all ({plVideos.length})</Label>
+                  </div>
+                  <div className="max-h-80 overflow-auto divide-y">
+                    {plVideos.map(v => (
+                      <div key={v.id} className="flex items-center gap-3 p-3">
+                        <Checkbox id={`v-${v.id}`} checked={!!plSelected[v.id]} onCheckedChange={(c) => {
+                          setPlSelected(prev => ({ ...prev, [v.id]: Boolean(c) }));
+                        }} />
+                        <Label htmlFor={`v-${v.id}`} className="flex-1">
+                          <span className="font-medium">{v.title}</span>
+                          <span className="ml-2 text-xs text-muted-foreground">({v.id})</span>
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
