@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import DailymotionPlayer from "@/components/player/DailymotionPlayer";
 import { useQuery } from "@tanstack/react-query";
@@ -36,13 +36,23 @@ const SeriesDetail = () => {
     enabled: !!id,
   });
 
+  const [currentVideoId, setCurrentVideoId] = useState<string | undefined>(undefined);
+
   useEffect(() => {
     if (!id) return;
     // Increment view count (fire-and-forget)
     supabase.rpc("increment_series_view", { p_series_id: id }).then(() => refetch());
   }, [id, refetch]);
 
-  const firstVideoId = series?.dailymotion_playlist_id ? undefined : episodes?.[0]?.dailymotion_video_id;
+  useEffect(() => {
+    if (series?.dailymotion_playlist_id) {
+      setCurrentVideoId(undefined);
+    } else {
+      setCurrentVideoId(episodes?.[0]?.dailymotion_video_id);
+    }
+  }, [series?.dailymotion_playlist_id, episodes]);
+
+  const activePlaylistId = currentVideoId ? undefined : series?.dailymotion_playlist_id || undefined;
   const ratingAvg = series && series.rating_count > 0 ? (series.rating_sum / series.rating_count).toFixed(1) : "0.0";
 
   return (
@@ -61,8 +71,8 @@ const SeriesDetail = () => {
 
       <DailymotionPlayer
         title={series?.title || "Series Player"}
-        playlistId={series?.dailymotion_playlist_id || undefined}
-        videoId={firstVideoId}
+        playlistId={activePlaylistId}
+        videoId={currentVideoId}
       />
 
       {episodes && episodes.length > 0 && (
@@ -70,7 +80,14 @@ const SeriesDetail = () => {
           <h2 className="mb-3 text-xl font-semibold">Episodes</h2>
           <ul className="grid gap-2">
             {episodes.map((ep) => (
-              <li key={ep.id} className="rounded-md border p-3">
+              <li
+                key={ep.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => setCurrentVideoId(ep.dailymotion_video_id)}
+                onKeyDown={(e) => { if (e.key === 'Enter') setCurrentVideoId(ep.dailymotion_video_id); }}
+                className={`rounded-md border p-3 transition-colors hover:bg-accent ${currentVideoId === ep.dailymotion_video_id ? "border-primary" : ""}`}
+              >
                 <span className="font-medium">{ep.title}</span>
               </li>
             ))}

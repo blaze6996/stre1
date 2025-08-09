@@ -18,9 +18,17 @@ const DailymotionPlayer = ({ videoId, playlistId, title = "Player", className }:
     if (full) return full[1];
     return input;
   };
+  const normalizePlaylistId = (input?: string) => {
+    if (!input) return undefined;
+    const clean = input.split("?")[0];
+    const fromUrl = clean.match(/playlist\/([A-Za-z0-9]+)/i);
+    if (fromUrl) return fromUrl[1];
+    return input;
+  };
   const effectiveVideoId = normalizeVideoId(videoId);
-  const src = playlistId
-    ? `https://www.dailymotion.com/embed/playlist/${playlistId}?queue-enable=false&sharing-enable=false&ui-start-screen-info=false&autoplay=0&mute=0&queue-autoplay-next=false`
+  const effectivePlaylistId = normalizePlaylistId(playlistId);
+  const src = effectivePlaylistId
+    ? `https://www.dailymotion.com/embed/playlist/${effectivePlaylistId}?queue-enable=false&sharing-enable=false&ui-start-screen-info=false&autoplay=0&mute=0&queue-autoplay-next=false`
     : `https://www.dailymotion.com/embed/video/${effectiveVideoId}?queue-enable=false&sharing-enable=false&ui-start-screen-info=false&autoplay=0&mute=0&queue-autoplay-next=false`;
 
   return (
