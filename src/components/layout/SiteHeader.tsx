@@ -6,7 +6,14 @@ const SiteHeader = () => {
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2 font-semibold">
-          <span className="inline-block h-6 w-6 rounded-md bg-primary" aria-hidden />
+          <img
+            src="/lovable-uploads/01f5154f-82d6-4bf7-a72a-e0a4e4087d76.png"
+            alt="StreamForge logo"
+            width={24}
+            height={24}
+            className="h-6 w-6 rounded-md object-cover"
+            loading="eager"
+          />
           <span className="text-lg">StreamForge</span>
         </Link>
         <nav className="flex items-center gap-2">
