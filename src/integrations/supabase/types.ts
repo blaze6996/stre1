@@ -142,15 +142,26 @@ export type Database = {
         }
       }
       admin_create_series: {
-        Args: {
-          admin_code: string
-          title: string
-          description?: string
-          cover_image_url?: string
-          dailymotion_playlist_id?: string
-          slug?: string
-          is_published?: boolean
-        }
+        Args:
+          | {
+              admin_code: string
+              title: string
+              description?: string
+              cover_image_url?: string
+              dailymotion_playlist_id?: string
+              slug?: string
+              is_published?: boolean
+            }
+          | {
+              admin_code: string
+              title: string
+              description?: string
+              cover_image_url?: string
+              dailymotion_playlist_id?: string
+              slug?: string
+              is_published?: boolean
+              category?: Database["public"]["Enums"]["series_category"]
+            }
         Returns: {
           category: Database["public"]["Enums"]["series_category"] | null
           cover_image_url: string | null

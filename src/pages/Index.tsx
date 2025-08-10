@@ -1,26 +1,36 @@
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, Star } from "lucide-react";
-import { useEffect } from "react";
-
+import { useEffect, useState } from "react";
 const Index = () => {
   const queryClient = useQueryClient();
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState<"all" | "donghua" | "anime" | "movie" | "cartoon">("all");
 
   const { data: series, isLoading, error } = useQuery({
-    queryKey: ["series"],
+    queryKey: ["series", q, cat],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const pattern = q ? `%${q}%` : "";
+      let qb = (supabase as any)
         .from("series")
         .select("id,title,description,cover_image_url,dailymotion_playlist_id,created_at,views_count,rating_sum,rating_count")
         .order("created_at", { ascending: false });
+      if (cat !== "all") {
+        qb = qb.eq("category", cat);
+      }
+      if (q && q.trim().length > 0) {
+        qb = qb.or(`title.ilike.${pattern},description.ilike.${pattern}`);
+      }
+      const { data, error } = await qb;
       if (error) throw error;
       return data ?? [];
     },
   });
-
   useEffect(() => {
     const channel = supabase
       .channel("series-changes")

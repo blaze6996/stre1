@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 const ADMIN_CODE = "Shivam2008";
 
 const Admin = () => {
@@ -19,7 +19,7 @@ const Admin = () => {
   const [desc, setDesc] = useState("");
   const [cover, setCover] = useState("");
   const [playlist, setPlaylist] = useState("");
-
+  const [category, setCategory] = useState<"donghua" | "anime" | "movie" | "cartoon" | "">("");
   // Episode form state
   const [epSeriesId, setEpSeriesId] = useState("");
   const [epTitle, setEpTitle] = useState("");
@@ -57,6 +57,14 @@ const Admin = () => {
   };
 
   const handleSaveSeries = async () => {
+    if (!title) {
+      toast({ title: "Title required", description: "Please enter a title" });
+      return;
+    }
+    if (!category) {
+      toast({ title: "Category required", description: "Please select a category" });
+      return;
+    }
     try {
       const { data, error } = await supabase.rpc("admin_create_series", {
         admin_code: code,
@@ -66,6 +74,7 @@ const Admin = () => {
         dailymotion_playlist_id: playlist || null,
         slug: null,
         is_published: false,
+        category,
       });
       if (error) throw error;
       toast({ title: "Series saved", description: `Created: ${data?.title}` });
@@ -73,11 +82,11 @@ const Admin = () => {
       setDesc("");
       setCover("");
       setPlaylist("");
+      setCategory("");
     } catch (err: any) {
       toast({ title: "Failed to save series", description: err.message || String(err), variant: "destructive" });
     }
   };
-
   const handleSaveEpisode = async () => {
     if (!epSeriesId || !epTitle || !videoId) {
       toast({ title: "Missing fields", description: "Please fill Series ID, Episode Title and Video ID" });
@@ -270,6 +279,20 @@ const Admin = () => {
               <div className="grid gap-2">
                 <Label htmlFor="playlist">Dailymotion Playlist ID (optional)</Label>
                 <Input id="playlist" placeholder="x123abc" value={playlist} onChange={(e) => setPlaylist(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="category">Category</Label>
+                <Select value={category} onValueChange={(v) => setCategory(v as any)}>
+                  <SelectTrigger id="category">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="donghua">Donghua</SelectItem>
+                    <SelectItem value="anime">Anime</SelectItem>
+                    <SelectItem value="movie">Movie</SelectItem>
+                    <SelectItem value="cartoon">Cartoon</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex gap-2">
                 <Button onClick={handleSaveSeries}>Save Series</Button>
