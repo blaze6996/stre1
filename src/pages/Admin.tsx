@@ -18,19 +18,28 @@ const Admin = () => {
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [cover, setCover] = useState("");
-  const [playlist, setPlaylist] = useState("");
+  const [playlist, setPlaylist] = useState(""); // Dailymotion playlist
+  const [ytPlaylist, setYtPlaylist] = useState(""); // YouTube playlist
   const [category, setCategory] = useState<"donghua" | "anime" | "movie" | "cartoon" | "">("");
   // Episode form state
   const [epSeriesId, setEpSeriesId] = useState("");
   const [epTitle, setEpTitle] = useState("");
   const [videoId, setVideoId] = useState("");
+  const [episodeProvider, setEpisodeProvider] = useState<"dailymotion" | "youtube">("dailymotion");
 
-  // Playlist import state
+  // Playlist import state (Dailymotion)
   const [plUrl, setPlUrl] = useState("");
   const [plVideos, setPlVideos] = useState<Array<{ id: string; title: string; description?: string; thumbnail_url?: string }>>([]);
   const [plSelected, setPlSelected] = useState<Record<string, boolean>>({});
   const [isFetchingPlaylist, setIsFetchingPlaylist] = useState(false);
   const [isImportingEpisodes, setIsImportingEpisodes] = useState(false);
+
+  // Playlist import state (YouTube)
+  const [ytPlUrl, setYtPlUrl] = useState("");
+  const [ytPlVideos, setYtPlVideos] = useState<Array<{ id: string; title: string; description?: string; thumbnail_url?: string }>>([]);
+  const [ytSelected, setYtSelected] = useState<Record<string, boolean>>({});
+  const [isFetchingYt, setIsFetchingYt] = useState(false);
+  const [isImportingYt, setIsImportingYt] = useState(false);
 
   // Delete form state
   const [delSeriesId, setDelSeriesId] = useState("");
@@ -45,6 +54,25 @@ const Admin = () => {
     if (full) return full[1];
     return clean.replace(/^https?:\/\/.+\//, "").split("_")[0];
   };
+
+  const extractYouTubeId = (input: string) => {
+    if (!input) return input;
+    try {
+      const url = new URL(input);
+      if (url.hostname.includes("youtube.com")) {
+        const v = url.searchParams.get("v");
+        if (v) return v;
+        const embed = url.pathname.match(/\/embed\/([A-Za-z0-9_-]{6,})/i);
+        if (embed) return embed[1];
+      }
+      if (url.hostname.includes("youtu.be")) {
+        const short = url.pathname.replace(/^\//, "");
+        if (short) return short;
+      }
+    } catch {}
+    return input.trim();
+  };
+
 
   const handleAuthorize = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +94,7 @@ const Admin = () => {
       return;
     }
     try {
-      const { data, error } = await supabase.rpc("admin_create_series", {
+      const { data, error } = await (supabase as any).rpc("admin_create_series", {
         admin_code: code,
         title,
         description: desc || null,
@@ -75,6 +103,7 @@ const Admin = () => {
         slug: null,
         is_published: false,
         category,
+        youtube_playlist_id: ytPlaylist || null,
       });
       if (error) throw error;
       toast({ title: "Series saved", description: `Created: ${data?.title}` });
@@ -93,12 +122,14 @@ const Admin = () => {
       return;
     }
     try {
-      const normalizedVideoId = extractDailymotionId(videoId);
-      const { data, error } = await supabase.rpc("admin_create_episode", {
+      const dmId = episodeProvider === "dailymotion" ? extractDailymotionId(videoId) : null;
+      const ytId = episodeProvider === "youtube" ? extractYouTubeId(videoId) : null;
+      const { data, error } = await (supabase as any).rpc("admin_create_episode", {
         admin_code: code,
         series_id: epSeriesId,
         title: epTitle,
-        dailymotion_video_id: normalizedVideoId,
+        dailymotion_video_id: dmId,
+        youtube_video_id: ytId,
         description: null,
         season_number: null,
         episode_number: null,
@@ -189,6 +220,77 @@ const Admin = () => {
     }
   };
 
+  // YouTube helpers
+  const extractYouTubePlaylistId = (input: string) => {
+    if (!input) return input;
+    try {
+      const url = new URL(input);
+      const list = url.searchParams.get("list");
+      if (list) return list;
+    } catch {}
+    return input.trim();
+  };
+
+  const handleFetchYouTubePlaylist = async () => {
+    if (!ytPlUrl) {
+      toast({ title: "Playlist URL required", description: "Paste a public YouTube playlist link or ID" });
+      return;
+    }
+    setIsFetchingYt(true);
+    try {
+      const { data, error } = await (supabase as any).functions.invoke("youtube-playlist", {
+        body: { playlist: ytPlUrl },
+      });
+      if (error) throw error;
+      const items = (data?.items || []) as Array<{ id: string; title: string; description?: string; thumbnail_url?: string }>;
+      setYtPlVideos(items);
+      setYtSelected({});
+      toast({ title: "Playlist fetched", description: `Found ${items.length} videos` });
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: "Failed to fetch playlist", description: err.message || String(err), variant: "destructive" });
+    } finally {
+      setIsFetchingYt(false);
+    }
+  };
+
+  const handleImportSelectedYt = async () => {
+    if (!epSeriesId) {
+      toast({ title: "Series ID required", description: "Enter the Series ID to import into", variant: "destructive" });
+      return;
+    }
+    const selectedIds = ytPlVideos.filter(v => ytSelected[v.id]).map(v => v.id);
+    if (selectedIds.length === 0) {
+      toast({ title: "No videos selected", description: "Select at least one video to import" });
+      return;
+    }
+    setIsImportingYt(true);
+    try {
+      const results = await Promise.allSettled(
+        selectedIds.map((vidId, idx) =>
+          (supabase as any).rpc("admin_create_episode", {
+            admin_code: code,
+            series_id: epSeriesId,
+            title: ytPlVideos.find(v => v.id === vidId)?.title || `Episode ${idx + 1}`,
+            dailymotion_video_id: null,
+            youtube_video_id: vidId,
+            description: null,
+            season_number: null,
+            episode_number: null,
+            published_at: null,
+          })
+        )
+      );
+      const success = results.filter((r) => r.status === "fulfilled").length;
+      const failures = results.length - success;
+      toast({ title: "Import complete", description: `${success} added, ${failures} failed` });
+    } catch (err: any) {
+      toast({ title: "Import failed", description: err.message || String(err), variant: "destructive" });
+    } finally {
+      setIsImportingYt(false);
+    }
+  };
+
   const handleDeleteSeries = async () => {
     if (!delSeriesId) {
       toast({ title: "Series ID required", description: "Enter the Series UUID to delete" });
@@ -253,7 +355,7 @@ const Admin = () => {
     <main className="container mx-auto px-4 py-10">
       <section className="mb-8">
         <h1 className="mb-2 text-3xl font-bold">Admin Panel</h1>
-        <p className="text-muted-foreground">Create and manage series cards, playlists, and episodes. Dailymotion will be used for hosting.</p>
+        <p className="text-muted-foreground">Create and manage series cards, playlists, and episodes. Dailymotion & YouTube are supported.</p>
       </section>
 
       <div className="grid gap-6 md:grid-cols-2">

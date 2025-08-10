@@ -26,6 +26,7 @@ export type Database = {
           series_id: string
           title: string
           updated_at: string
+          youtube_video_id: string | null
         }
         Insert: {
           created_at?: string
@@ -38,6 +39,7 @@ export type Database = {
           series_id: string
           title: string
           updated_at?: string
+          youtube_video_id?: string | null
         }
         Update: {
           created_at?: string
@@ -50,6 +52,7 @@ export type Database = {
           series_id?: string
           title?: string
           updated_at?: string
+          youtube_video_id?: string | null
         }
         Relationships: [
           {
@@ -77,6 +80,7 @@ export type Database = {
           title: string
           updated_at: string
           views_count: number
+          youtube_playlist_id: string | null
         }
         Insert: {
           category?: Database["public"]["Enums"]["series_category"] | null
@@ -93,6 +97,7 @@ export type Database = {
           title: string
           updated_at?: string
           views_count?: number
+          youtube_playlist_id?: string | null
         }
         Update: {
           category?: Database["public"]["Enums"]["series_category"] | null
@@ -109,6 +114,7 @@ export type Database = {
           title?: string
           updated_at?: string
           views_count?: number
+          youtube_playlist_id?: string | null
         }
         Relationships: []
       }
@@ -118,16 +124,28 @@ export type Database = {
     }
     Functions: {
       admin_create_episode: {
-        Args: {
-          admin_code: string
-          series_id: string
-          title: string
-          dailymotion_video_id: string
-          description?: string
-          season_number?: number
-          episode_number?: number
-          published_at?: string
-        }
+        Args:
+          | {
+              admin_code: string
+              series_id: string
+              title: string
+              dailymotion_video_id: string
+              description?: string
+              season_number?: number
+              episode_number?: number
+              published_at?: string
+            }
+          | {
+              admin_code: string
+              series_id: string
+              title: string
+              dailymotion_video_id: string
+              description?: string
+              season_number?: number
+              episode_number?: number
+              published_at?: string
+              youtube_video_id?: string
+            }
         Returns: {
           created_at: string
           dailymotion_video_id: string
@@ -139,6 +157,7 @@ export type Database = {
           series_id: string
           title: string
           updated_at: string
+          youtube_video_id: string | null
         }
       }
       admin_create_series: {
@@ -162,6 +181,27 @@ export type Database = {
               is_published?: boolean
               category?: Database["public"]["Enums"]["series_category"]
             }
+          | {
+              admin_code: string
+              title: string
+              description?: string
+              cover_image_url?: string
+              dailymotion_playlist_id?: string
+              slug?: string
+              is_published?: boolean
+              category?: Database["public"]["Enums"]["series_category"]
+              youtube_playlist_id?: string
+            }
+          | {
+              admin_code: string
+              title: string
+              description?: string
+              cover_image_url?: string
+              dailymotion_playlist_id?: string
+              slug?: string
+              is_published?: boolean
+              youtube_playlist_id?: string
+            }
         Returns: {
           category: Database["public"]["Enums"]["series_category"] | null
           cover_image_url: string | null
@@ -177,6 +217,7 @@ export type Database = {
           title: string
           updated_at: string
           views_count: number
+          youtube_playlist_id: string | null
         }
       }
       admin_delete_episode: {
