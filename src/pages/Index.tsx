@@ -71,12 +71,33 @@ const Index = () => {
 
       <section className="container mx-auto px-4 py-10">
         <header className="mb-6">
-          <h2 className="text-2xl font-semibold">Latest Series</h2>
-          {error ? (
-            <p className="text-sm text-destructive">Failed to load series</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">{isLoading ? "Loading..." : `${series.length} series`}</p>
-          )}
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold">Browse Series</h2>
+              {error ? (
+                <p className="text-sm text-destructive">Failed to load series</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">{isLoading ? "Loading..." : `${series.length} series found`}</p>
+              )}
+            </div>
+            <div className="w-full md:max-w-md">
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search Donghua, Anime, Movies, Cartoon..."
+                aria-label="Search series"
+              />
+            </div>
+          </div>
+          <Tabs value={cat} onValueChange={(v) => setCat(v as any)} className="mt-4">
+            <TabsList className="grid w-full grid-cols-5 sm:w-auto">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="donghua">Donghua</TabsTrigger>
+              <TabsTrigger value="anime">Anime</TabsTrigger>
+              <TabsTrigger value="movie">Movies</TabsTrigger>
+              <TabsTrigger value="cartoon">Cartoon</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </header>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {series?.map((s) => {
