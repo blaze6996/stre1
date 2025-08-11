@@ -125,7 +125,7 @@ const Index = () => {
                     <div className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-background/80 px-2 py-1 text-xs text-foreground backdrop-blur">
                       <Eye className="mr-1 h-3 w-3" /> {s.views_count ?? 0}
                     </div>
-                    <div className="absolute right-2 top-2 rounded-md bg-background/80 px-2 py-1 text-xs text-foreground backdrop-blur">
+                    <div className={`absolute right-2 top-2 status-badge ${((s as any).status === 'completed') ? 'status-badge--completed' : 'status-badge--ongoing'}`}>
                       {(s as any).status ? `${String((s as any).status).charAt(0).toUpperCase()}${String((s as any).status).slice(1)}` : ""}
                     </div>
                     <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-md bg-background/80 px-2 py-1 text-xs text-foreground backdrop-blur">
