@@ -21,11 +21,15 @@ const Admin = () => {
   const [playlist, setPlaylist] = useState(""); // Dailymotion playlist
   const [ytPlaylist, setYtPlaylist] = useState(""); // YouTube playlist
   const [category, setCategory] = useState<"donghua" | "anime" | "movie" | "cartoon" | "">("");
+  const [newStatus, setNewStatus] = useState<"ongoing" | "completed">("ongoing");
   // Episode form state
   const [epSeriesId, setEpSeriesId] = useState("");
   const [epTitle, setEpTitle] = useState("");
   const [videoId, setVideoId] = useState("");
   const [episodeProvider, setEpisodeProvider] = useState<"dailymotion" | "youtube">("dailymotion");
+  // Status update form state
+  const [statusSeriesId, setStatusSeriesId] = useState("");
+  const [statusToSet, setStatusToSet] = useState<"ongoing" | "completed">("ongoing");
 
   // Playlist import state (Dailymotion)
   const [plUrl, setPlUrl] = useState("");
@@ -106,12 +110,23 @@ const Admin = () => {
         youtube_playlist_id: ytPlaylist || null,
       });
       if (error) throw error;
+      // Update status if needed
+      const createdId = (data as any)?.id;
+      if (createdId && newStatus !== "ongoing") {
+        const { error: statusErr } = await (supabase as any).rpc("admin_update_series_status", {
+          admin_code: code,
+          p_series_id: createdId,
+          p_status: newStatus,
+        });
+        if (statusErr) throw statusErr;
+      }
       toast({ title: "Series saved", description: `Created: ${data?.title}` });
       setTitle("");
       setDesc("");
       setCover("");
       setPlaylist("");
       setCategory("");
+      setNewStatus("ongoing");
     } catch (err: any) {
       toast({ title: "Failed to save series", description: err.message || String(err), variant: "destructive" });
     }
@@ -327,6 +342,26 @@ const Admin = () => {
     }
   };
 
+  const handleUpdateSeriesStatus = async () => {
+    if (!statusSeriesId) {
+      toast({ title: "Series ID required", description: "Enter the Series UUID" });
+      return;
+    }
+    try {
+      const { error } = await (supabase as any).rpc("admin_update_series_status", {
+        admin_code: code,
+        p_series_id: statusSeriesId,
+        p_status: statusToSet,
+      });
+      if (error) throw error;
+      toast({ title: "Status updated", description: `Series marked as ${statusToSet}` });
+      setStatusSeriesId("");
+      setStatusToSet("ongoing");
+    } catch (err: any) {
+      toast({ title: "Failed to update status", description: err.message || String(err), variant: "destructive" });
+    }
+  };
+
   if (!authorized) {
     return (
       <main className="container mx-auto max-w-xl px-4 py-10">
@@ -393,6 +428,18 @@ const Admin = () => {
                     <SelectItem value="anime">Anime</SelectItem>
                     <SelectItem value="movie">Movie</SelectItem>
                     <SelectItem value="cartoon">Cartoon</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="status">Status</Label>
+                <Select value={newStatus} onValueChange={(v) => setNewStatus(v as any)}>
+                  <SelectTrigger id="status">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ongoing">Ongoing</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -476,6 +523,36 @@ const Admin = () => {
                   </div>
                 </div>
               )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Update Series Status</CardTitle>
+            <CardDescription>Set a series as Ongoing or Completed</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="status-series-id">Series ID</Label>
+                <Input id="status-series-id" placeholder="Series UUID" value={statusSeriesId} onChange={(e) => setStatusSeriesId(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="status-select">Status</Label>
+                <Select value={statusToSet} onValueChange={(v) => setStatusToSet(v as any)}>
+                  <SelectTrigger id="status-select">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ongoing">Ongoing</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Button onClick={handleUpdateSeriesStatus}>Update Status</Button>
+              </div>
             </div>
           </CardContent>
         </Card>
