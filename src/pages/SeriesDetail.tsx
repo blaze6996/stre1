@@ -4,9 +4,11 @@ import DailymotionPlayer from "@/components/player/DailymotionPlayer";
 import YouTubePlayer from "@/components/player/YouTubePlayer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Eye } from "lucide-react";
 
 const SeriesDetail = () => {
   const { id } = useParams();
+  const [currentViews, setCurrentViews] = useState<number | null>(null);
 
   const { data: series, refetch } = useQuery({
     queryKey: ["series", id],
@@ -40,11 +42,18 @@ const SeriesDetail = () => {
   const [provider, setProvider] = useState<"dailymotion" | "youtube">("dailymotion");
   const [currentId, setCurrentId] = useState<string | undefined>(undefined);
 
+  // Set initial view count
   useEffect(() => {
-    if (!id) return;
-    // Increment view count (fire-and-forget)
-    supabase.rpc("increment_series_view", { p_series_id: id }).then(() => refetch());
-  }, [id, refetch]);
+    if (series?.views_count !== undefined) {
+      setCurrentViews(series.views_count);
+    }
+  }, [series?.views_count]);
+
+  const handleViewUpdate = (newViewCount: number) => {
+    setCurrentViews(newViewCount);
+    // Optionally refetch series data to keep everything in sync
+    refetch();
+  };
 
   useEffect(() => {
     if (series?.dailymotion_playlist_id) {
@@ -69,13 +78,17 @@ const SeriesDetail = () => {
   }, [series?.dailymotion_playlist_id, series?.youtube_playlist_id, episodes]);
 
   const ratingAvg = series && series.rating_count > 0 ? (series.rating_sum / series.rating_count).toFixed(1) : "0.0";
+  const displayViews = currentViews !== null ? currentViews : (series?.views_count ?? 0);
 
   return (
     <main className="container mx-auto px-4 py-8">
       <header className="mb-6">
         <h1 className="mb-2 text-3xl font-bold">{series?.title || "Series"}</h1>
         <div className="text-sm text-muted-foreground">
-          <span>{series?.views_count ?? 0} views</span>
+          <span className="flex items-center gap-1">
+            <Eye className="h-4 w-4" />
+            {displayViews.toLocaleString()} views
+          </span>
           <span className="mx-2">•</span>
           <span>{ratingAvg} ★</span>
         </div>
@@ -89,12 +102,16 @@ const SeriesDetail = () => {
           title={series?.title || "Series Player"}
           playlistId={series?.dailymotion_playlist_id || undefined}
           videoId={series?.dailymotion_playlist_id ? undefined : currentId}
+          seriesId={id}
+          onViewUpdate={handleViewUpdate}
         />
       ) : (
         <YouTubePlayer
           title={series?.title || "Series Player"}
           playlistId={series?.youtube_playlist_id || undefined}
           videoId={series?.youtube_playlist_id ? undefined : currentId}
+          seriesId={id}
+          onViewUpdate={handleViewUpdate}
         />
       )}
 
