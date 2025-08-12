@@ -109,13 +109,13 @@ const Index = () => {
             </TabsList>
           </Tabs>
         </header>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {series?.map((s) => {
             const avg = s.rating_count > 0 ? (s.rating_sum / s.rating_count).toFixed(1) : "0.0";
             return (
               <Link key={s.id} to={`/series/${s.id}`} className="group">
                 <Card className="overflow-hidden">
-                  <div className="relative aspect-[3/4] w-full overflow-hidden">
+                  <div className="relative aspect-[2/3] w-full overflow-hidden">
                     <img
                       src={s.cover_image_url || "/placeholder.svg"}
                       alt={`${s.title} cover image`}
@@ -132,11 +132,11 @@ const Index = () => {
                       <Star className="mr-1 h-3 w-3 fill-yellow-500 text-yellow-500" /> {avg}
                     </div>
                   </div>
-                  <CardHeader>
-                    <CardTitle className="line-clamp-1">{s.title}</CardTitle>
+                  <CardHeader className="p-4">
+                    <CardTitle className="line-clamp-1 text-lg">{s.title}</CardTitle>
                   </CardHeader>
                   {s.description && (
-                    <CardContent>
+                    <CardContent className="p-4 pt-0">
                       <p className="line-clamp-2 text-sm text-muted-foreground">{s.description}</p>
                     </CardContent>
                   )}
